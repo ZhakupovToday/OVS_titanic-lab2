@@ -1,0 +1,11 @@
+.git
+.github
+.idea
+.env
+**/__pycache__
+.pytest_cache
+models
+notebooks
+test
+keycloak
+docker-compose.yml

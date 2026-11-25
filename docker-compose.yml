@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:15.2
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
+      interval: 5s
+      timeout: 10s
+      retries: 120
+
+  keycloak:
+    image: ${DOCKERHUB_USERNAME:-local}/titanic-keycloak:latest
+    build:
+      context: ./keycloak/docker
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    command: start --optimized --db-password=${POSTGRES_PASSWORD}
+    ports:
+      - "8443:8443"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  inference:
+    image: ${DOCKERHUB_USERNAME:-local}/titanic-inference:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_URL: ${KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-inference}
+      KEYCLOAK_VERIFY_SSL: ${KEYCLOAK_VERIFY_SSL:-false}
+      CLIENT_ID: ${CLIENT_ID}
+      CLIENT_SECRET: ${CLIENT_SECRET}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - keycloak
+
+volumes:
+  pg-data:
