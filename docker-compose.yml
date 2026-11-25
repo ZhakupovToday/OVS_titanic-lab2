@@ -21,6 +21,7 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HOSTNAME: localhost
     command: start --optimized --db-password=${POSTGRES_PASSWORD}
     ports:
       - "8443:8443"
